@@ -1,0 +1,57 @@
+[workspace]
+resolver = "2"
+members = [
+    ".",
+    "crates/pspm-core",
+    "crates/pspm-import",
+    "crates/pspm-analysis",
+    "crates/pspm-strength",
+    "crates/pspm-breach",
+    "crates/pspm-duplicate",
+    "crates/pspm-ai",
+    "crates/pspm-checker",
+    "crates/pspm-rotation",
+    "crates/pspm-generator",
+    "crates/pspm-export",
+    "crates/pspm-dashboard",
+]
+
+[package]
+name = "pspm"
+version = "0.1.0"
+edition = "2021"
+description = "Password Security Posture Management — local-first vault auditing, breach detection, AI-assisted organization, and password rotation"
+authors = ["Navin B. Ruas <founder@nbr.company>"]
+
+[dependencies]
+pspm-core = { path = "crates/pspm-core" }
+pspm-import = { path = "crates/pspm-import" }
+pspm-analysis = { path = "crates/pspm-analysis" }
+pspm-strength = { path = "crates/pspm-strength" }
+pspm-breach = { path = "crates/pspm-breach" }
+pspm-duplicate = { path = "crates/pspm-duplicate" }
+pspm-ai = { path = "crates/pspm-ai" }
+pspm-checker = { path = "crates/pspm-checker" }
+pspm-rotation = { path = "crates/pspm-rotation" }
+pspm-generator = { path = "crates/pspm-generator" }
+pspm-export = { path = "crates/pspm-export" }
+pspm-dashboard = { path = "crates/pspm-dashboard" }
+
+axum = { version = "0.7", features = ["macros"] }
+tower-http = { version = "0.5", features = ["cors", "fs", "trace"] }
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tower = "0.4"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+include_dir = "0.7"
+mime_guess = "2"
+regex-lite = "0.1"
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1

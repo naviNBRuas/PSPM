@@ -1,0 +1,36 @@
+# Secrets & exports
+bitwarden_export*
+*.csv
+*.json
+!Cargo.lock
+!package-lock.json
+
+# Rust
+target/
+**/*.rs.bk
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# Tauri
+src-tauri/target/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# SQLCipher databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment
+.env
+.env.local

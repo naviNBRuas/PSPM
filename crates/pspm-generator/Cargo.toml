@@ -1,0 +1,8 @@
+[package]
+name = "pspm-generator"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+pspm-core = { path = "../pspm-core" }
+rand = "0.8"

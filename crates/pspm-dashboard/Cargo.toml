@@ -1,0 +1,8 @@
+[package]
+name = "pspm-dashboard"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+pspm-core = { path = "../pspm-core" }
+pspm-analysis = { path = "../pspm-analysis" }
