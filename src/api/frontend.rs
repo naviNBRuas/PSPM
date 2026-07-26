@@ -1,7 +1,7 @@
 use axum::{
     body::Body,
     http::{header, StatusCode, Uri},
-    response::{IntoResponse, Response},
+    response::Response,
 };
 use std::path::PathBuf;
 use tokio::fs;
@@ -71,13 +71,12 @@ fn frontend_dist_dir() -> PathBuf {
 }
 
 fn dirs_data_dir() -> PathBuf {
-    let base = std::env::var("PSPM_DATA_DIR")
+    std::env::var("PSPM_DATA_DIR")
         .map(PathBuf::from)
         .unwrap_or_else(|_| {
             let home = std::env::var("HOME")
                 .or_else(|_| std::env::var("USERPROFILE"))
                 .unwrap_or_else(|_| ".".to_string());
             PathBuf::from(home).join(".pspm")
-        });
-    base
+        })
 }

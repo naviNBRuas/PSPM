@@ -17,7 +17,21 @@ impl ImportEngine for BitwardenJsonImporter {
         let export: BitwardenExport = serde_json::from_str(data)
             .map_err(|e| PspmError::Import(format!("Invalid Bitwarden JSON: {e}")))?;
 
-        let vault = export.into_vault()?;
+        let item_count = export.items.len() as u32;
+        let folder_count = export.folders.as_ref().map(|f| f.len() as u32).unwrap_or(0);
+
+        let vault = pspm_core::types::Vault {
+            id: uuid::Uuid::new_v4(),
+            name: "Bitwarden Export".to_string(),
+            description: None,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+            source: pspm_core::types::ImportSource::BitwardenJson,
+            item_count,
+            folder_count,
+            organization_count: 0,
+        };
+
         let items = export.into_items()?;
 
         Ok((vault, items))
@@ -36,16 +50,7 @@ impl ImportEngine for BitwardenCsvImporter {
     }
 
     fn parse(&self, data: &str) -> Result<(pspm_core::types::Vault, Vec<pspm_core::types::Item>)> {
-        let mut reader = csv::Reader::from_reader(data.as_bytes());
-        let headers = reader.headers()
-            .map_err(|e| PspmError::Import(format!("Invalid CSV headers: {e}")))?
-            .clone();
-
-        let mut items = Vec::new();
-        for result in reader.records() {
-            let record = result.map_err(|e| PspmError::Import(format!("CSV parse error: {e}")))?;
-            // TODO: Map CSV fields to Item struct
-        }
+        let items = crate::csv_import::parse_bitwarden_csv(data)?;
 
         let vault = pspm_core::types::Vault {
             id: uuid::Uuid::new_v4(),
@@ -65,6 +70,7 @@ impl ImportEngine for BitwardenCsvImporter {
 
 #[derive(Debug, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 struct BitwardenExport {
     encrypted: Option<bool>,
     folders: Option<Vec<BitwardenFolder>>,
@@ -73,6 +79,7 @@ struct BitwardenExport {
 
 #[derive(Debug, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 struct BitwardenFolder {
     id: Option<String>,
     name: String,
@@ -80,6 +87,7 @@ struct BitwardenFolder {
 
 #[derive(Debug, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 struct BitwardenItem {
     id: Option<String>,
     organization_id: Option<String>,
@@ -108,6 +116,7 @@ struct BitwardenLogin {
 }
 
 #[derive(Debug, serde::Deserialize)]
+#[allow(dead_code)]
 struct BitwardenUri {
     uri: Option<String>,
     match_detected: Option<u32>,
@@ -115,6 +124,7 @@ struct BitwardenUri {
 
 #[derive(Debug, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 struct BitwardenField {
     name: String,
     value: Option<String>,
@@ -124,23 +134,6 @@ struct BitwardenField {
 }
 
 impl BitwardenExport {
-    fn into_vault(self) -> Result<pspm_core::types::Vault> {
-        let folder_count = self.folders.as_ref().map(|f| f.len() as u32).unwrap_or(0);
-        let item_count = self.items.len() as u32;
-
-        Ok(pspm_core::types::Vault {
-            id: uuid::Uuid::new_v4(),
-            name: "Bitwarden Export".to_string(),
-            description: None,
-            created_at: chrono::Utc::now(),
-            updated_at: chrono::Utc::now(),
-            source: pspm_core::types::ImportSource::BitwardenJson,
-            item_count,
-            folder_count,
-            organization_count: 0,
-        })
-    }
-
     fn into_items(self) -> Result<Vec<pspm_core::types::Item>> {
         let items = self
             .items

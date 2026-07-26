@@ -34,3 +34,44 @@ pub enum PspmError {
 }
 
 pub type Result<T> = std::result::Result<T, PspmError>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_error_display_database() {
+        let err = PspmError::Database(rusqlite::Error::InvalidParameterName("test".into()));
+        assert!(err.to_string().contains("Database error"));
+    }
+
+    #[test]
+    fn test_error_display_import() {
+        let err = PspmError::Import("Invalid format".into());
+        assert_eq!(err.to_string(), "Import error: Invalid format");
+    }
+
+    #[test]
+    fn test_error_display_not_found() {
+        let err = PspmError::NotFound("vault".into());
+        assert_eq!(err.to_string(), "Not found: vault");
+    }
+
+    #[test]
+    fn test_error_display_custom() {
+        let err = PspmError::Custom("something went wrong".into());
+        assert_eq!(err.to_string(), "something went wrong");
+    }
+
+    #[test]
+    fn test_error_display_network() {
+        let err = PspmError::Network("timeout".into());
+        assert_eq!(err.to_string(), "Network error: timeout");
+    }
+
+    #[test]
+    fn test_error_display_crypto() {
+        let err = PspmError::Crypto("key error".into());
+        assert_eq!(err.to_string(), "Crypto error: key error");
+    }
+}

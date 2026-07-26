@@ -109,7 +109,7 @@ pub enum FieldType {
     Linked,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ImportSource {
     BitwardenJson,
     BitwardenCsv,
@@ -121,6 +121,44 @@ pub enum ImportSource {
     Chrome,
     Firefox,
     Custom(String),
+}
+
+impl std::fmt::Display for ImportSource {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ImportSource::BitwardenJson => write!(f, "BitwardenJson"),
+            ImportSource::BitwardenCsv => write!(f, "BitwardenCsv"),
+            ImportSource::KeePass => write!(f, "KeePass"),
+            ImportSource::OnePassword => write!(f, "OnePassword"),
+            ImportSource::ProtonPass => write!(f, "ProtonPass"),
+            ImportSource::LastPass => write!(f, "LastPass"),
+            ImportSource::Dashlane => write!(f, "Dashlane"),
+            ImportSource::Chrome => write!(f, "Chrome"),
+            ImportSource::Firefox => write!(f, "Firefox"),
+            ImportSource::Custom(s) => write!(f, "Custom({s})"),
+        }
+    }
+}
+
+impl std::str::FromStr for ImportSource {
+    type Err = String;
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        match s {
+            "BitwardenJson" => Ok(ImportSource::BitwardenJson),
+            "BitwardenCsv" => Ok(ImportSource::BitwardenCsv),
+            "KeePass" => Ok(ImportSource::KeePass),
+            "OnePassword" => Ok(ImportSource::OnePassword),
+            "ProtonPass" => Ok(ImportSource::ProtonPass),
+            "LastPass" => Ok(ImportSource::LastPass),
+            "Dashlane" => Ok(ImportSource::Dashlane),
+            "Chrome" => Ok(ImportSource::Chrome),
+            "Firefox" => Ok(ImportSource::Firefox),
+            _ if s.starts_with("Custom(") && s.ends_with(')') => {
+                Ok(ImportSource::Custom(s[7..s.len()-1].to_string()))
+            }
+            _ => Err(format!("Unknown import source: {s}")),
+        }
+    }
 }
 
 // ─── Analysis / Report Types ───────────────────────────────────
@@ -142,6 +180,12 @@ pub struct VaultReport {
     pub overall_score: u8,
     pub password_age_distribution: PasswordAgeDistribution,
     pub items: Vec<ItemReport>,
+}
+
+impl VaultReport {
+    pub fn accounts_with_mfa(&self) -> u32 {
+        self.total_logins - self.accounts_without_mfa
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -285,7 +329,7 @@ pub struct AiSuggestion {
     pub applies: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum AiSuggestionType {
     MoveToFolder,
     RenameTitle,
@@ -325,6 +369,17 @@ pub enum RotationStatus {
     Unsupported,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RotationHistory {
+    pub id: Uuid,
+    pub item_id: Uuid,
+    pub old_password_hash: Option<String>,
+    pub new_password_hash: String,
+    pub status: RotationStatus,
+    pub domain: Option<String>,
+    pub rotated_at: DateTime<Utc>,
+}
+
 // ─── Checker Types ─────────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -340,7 +395,7 @@ pub struct LoginCheckResult {
     pub checked_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum LoginStatus {
     Success,
     WrongPassword,
@@ -372,7 +427,25 @@ pub struct DashboardMetrics {
     pub grade_distribution: GradeDistribution,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+impl Default for DashboardMetrics {
+    fn default() -> Self {
+        Self {
+            overall_security_score: 0,
+            total_items: 0,
+            password_reuse_percentage: 0.0,
+            weak_password_percentage: 0.0,
+            breached_password_percentage: 0.0,
+            mfa_coverage_percentage: 0.0,
+            passkey_adoption_percentage: 0.0,
+            duplicate_percentage: 0.0,
+            last_audit_date: None,
+            password_age_avg_days: 0.0,
+            grade_distribution: GradeDistribution::default(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct GradeDistribution {
     pub a_plus: u32,
     pub a: u32,

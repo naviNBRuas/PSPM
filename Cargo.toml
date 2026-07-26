@@ -47,9 +47,9 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1", features = ["v4", "serde"] }
-include_dir = "0.7"
 mime_guess = "2"
 regex-lite = "0.1"
+clap = { version = "4", features = ["derive"] }
 
 [profile.release]
 strip = true

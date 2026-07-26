@@ -33,7 +33,7 @@ impl Default for AppConfig {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub enum AiProvider {
     #[default]
     Ollama,
@@ -42,7 +42,7 @@ pub enum AiProvider {
     Custom,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub enum ExportFormat {
     #[default]
     BitwardenJson,
@@ -51,10 +51,39 @@ pub enum ExportFormat {
     EncryptedBackup,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub enum Theme {
     #[default]
     System,
     Light,
     Dark,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_default_config() {
+        let config = AppConfig::default();
+        assert_eq!(config.ai_provider, AiProvider::Ollama);
+        assert_eq!(config.ai_model, "llama3.2");
+        assert_eq!(config.ai_endpoint, "http://localhost:11434");
+        assert_eq!(config.export_format, ExportFormat::BitwardenJson);
+        assert_eq!(config.theme, Theme::System);
+        assert_eq!(config.language, "en");
+        assert!(config.db_password.is_none());
+        assert!(config.hibp_api_key.is_none());
+        assert!(!config.check_live_logins);
+        assert!(!config.auto_rotate_passwords);
+    }
+
+    #[test]
+    fn test_config_serialization() {
+        let config = AppConfig::default();
+        let json = serde_json::to_string(&config).unwrap();
+        let deserialized: AppConfig = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialized.ai_model, config.ai_model);
+        assert_eq!(deserialized.ai_endpoint, config.ai_endpoint);
+    }
 }

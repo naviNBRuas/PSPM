@@ -166,3 +166,136 @@ fn compute_grade(
     }
     PasswordGrade::F
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_password_empty() {
+        let result = StrengthAnalyzer::analyze("");
+        assert_eq!(result.length, 0);
+        assert_eq!(result.entropy, 0.0);
+        assert_eq!(result.grade, PasswordGrade::F);
+    }
+
+    #[test]
+    fn test_password_very_strong() {
+        let result = StrengthAnalyzer::analyze("CorrectHorseBatteryStaple!2024");
+        assert_eq!(result.grade, PasswordGrade::APlus);
+        assert!(result.entropy > 100.0);
+    }
+
+    #[test]
+    fn test_password_strong() {
+        let result = StrengthAnalyzer::analyze("Str0ngP@ssword!X");
+        assert_eq!(result.grade, PasswordGrade::A);
+        assert!(result.entropy > 80.0);
+    }
+
+    #[test]
+    fn test_password_medium() {
+        let result = StrengthAnalyzer::analyze("MediumP@ssw0rd");
+        assert_eq!(result.grade, PasswordGrade::B);
+        assert!(result.entropy >= 60.0);
+    }
+
+    #[test]
+    fn test_password_weak() {
+        let result = StrengthAnalyzer::analyze("pass1");
+        assert_eq!(result.grade, PasswordGrade::F);
+        assert!(result.entropy < 28.0);
+    }
+
+    #[test]
+    fn test_dictionary_word_detected() {
+        let result = StrengthAnalyzer::analyze("mypassword123");
+        assert!(result.contains_dictionary_word);
+    }
+
+    #[test]
+    fn test_keyboard_walk_detected() {
+        let result = StrengthAnalyzer::analyze("qwertyasdf");
+        assert!(result.contains_keyboard_walk);
+    }
+
+    #[test]
+    fn test_date_pattern_detected() {
+        let result = StrengthAnalyzer::analyze("pass2024-01-15");
+        assert!(result.contains_date);
+    }
+
+    #[test]
+    fn test_date_pattern_compact_detected() {
+        let result = StrengthAnalyzer::analyze("pass20240115");
+        assert!(result.contains_date);
+    }
+
+    #[test]
+    fn test_charset_all() {
+        let result = StrengthAnalyzer::analyze("Ab1!xxxx");
+        assert!(result.has_lowercase);
+        assert!(result.has_uppercase);
+        assert!(result.has_digits);
+        assert!(result.has_symbols);
+        assert_eq!(result.charset_size, 95);
+    }
+
+    #[test]
+    fn test_charset_digits_only() {
+        let result = StrengthAnalyzer::analyze("12345678");
+        assert!(!result.has_lowercase);
+        assert!(!result.has_uppercase);
+        assert!(result.has_digits);
+        assert!(!result.has_symbols);
+        assert_eq!(result.charset_size, 10);
+    }
+
+    #[test]
+    fn test_policy_no_violations() {
+        let policy = PasswordPolicy {
+            min_length: 8, max_length: 64, require_lowercase: true,
+            require_uppercase: true, require_digits: true, require_symbols: true,
+            no_ambiguous: false, min_entropy: 0.0, avoid_common: false,
+        };
+        let violations = StrengthAnalyzer::check_policy("Abcd1234!", &policy);
+        assert!(violations.is_empty());
+    }
+
+    #[test]
+    fn test_policy_violations() {
+        let policy = PasswordPolicy {
+            min_length: 10, max_length: 64, require_lowercase: true,
+            require_uppercase: true, require_digits: true, require_symbols: true,
+            no_ambiguous: false, min_entropy: 0.0, avoid_common: false,
+        };
+        let violations = StrengthAnalyzer::check_policy("short", &policy);
+        assert!(!violations.is_empty());
+        assert!(violations.iter().any(|v| v.contains("Minimum length")));
+    }
+
+    #[test]
+    fn test_keyboard_reverse_walk_detected() {
+        let result = StrengthAnalyzer::analyze("poiuytrewq");
+        assert!(result.contains_keyboard_walk);
+    }
+
+    #[test]
+    fn test_dictionary_word_case_insensitive() {
+        let result = StrengthAnalyzer::analyze("MyPaSsWoRd!");
+        assert!(result.contains_dictionary_word);
+    }
+
+    #[test]
+    fn test_password_edge_d_minimal() {
+        let result = StrengthAnalyzer::analyze("Ab1def");
+        assert_eq!(result.grade, PasswordGrade::D);
+    }
+
+    #[test]
+    fn test_password_entropy_computation() {
+        // 8 chars, all lowercase: 8 * log2(26) = 8 * 4.7 = 37.6
+        let result = StrengthAnalyzer::analyze("abcdefgh");
+        assert!((result.entropy - 37.6).abs() < 0.1);
+    }
+}

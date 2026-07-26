@@ -4,8 +4,10 @@ const navItems = [
   { to: "/", label: "Dashboard", icon: "📊" },
   { to: "/import", label: "Import", icon: "📥" },
   { to: "/vault", label: "Vault", icon: "🔐" },
+  { to: "/organization", label: "Organization", icon: "📁" },
   { to: "/analysis", label: "Analysis", icon: "📋" },
   { to: "/generator", label: "Generator", icon: "⚡" },
+  { to: "/audit", label: "Audit Log", icon: "📜" },
 ];
 
 export default function App() {
@@ -38,7 +40,7 @@ export default function App() {
           ))}
         </nav>
         <div className="text-xs text-gray-600 mt-4">
-          v0.1.0 &middot; Local-first
+          v0.2.0 &middot; Local-first
         </div>
       </aside>
       <main className="flex-1 overflow-auto p-6">

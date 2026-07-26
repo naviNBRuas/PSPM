@@ -6,3 +6,8 @@ edition = "2021"
 [dependencies]
 pspm-core = { path = "../pspm-core" }
 pspm-analysis = { path = "../pspm-analysis" }
+pspm-strength = { path = "../pspm-strength" }
+chrono = { version = "0.4", features = ["serde"] }
+
+[dev-dependencies]
+uuid = { version = "1", features = ["v4"] }

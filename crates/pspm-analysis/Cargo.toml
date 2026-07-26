@@ -5,4 +5,6 @@ edition = "2021"
 
 [dependencies]
 pspm-core = { path = "../pspm-core" }
-chrono = "0.4"
+pspm-strength = { path = "../pspm-strength" }
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4"] }

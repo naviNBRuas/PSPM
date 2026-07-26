@@ -1,5 +1,5 @@
-use pspm_core::types::Item;
 use pspm_core::error::{PspmError, Result};
+use pspm_core::types::Item;
 
 pub fn parse_bitwarden_csv(data: &str) -> Result<Vec<Item>> {
     let mut reader = csv::Reader::from_reader(data.as_bytes());
@@ -20,25 +20,21 @@ pub fn parse_bitwarden_csv(data: &str) -> Result<Vec<Item>> {
         }
     }
 
+    let idx = |name: &str| header_names.iter().position(|h| h == name);
+
     let mut items = Vec::new();
     for result in reader.records() {
         let record = result.map_err(|e| PspmError::Import(format!("CSV row error: {e}")))?;
 
-        let name = record
-            .get(header_names.iter().position(|h| h == "name"))
-            .unwrap_or("")
-            .to_string();
-
-        let username = record
-            .get(header_names.iter().position(|h| h == "login_username"));
-
-        let password = record
-            .get(header_names.iter().position(|h| h == "login_password"));
-
-        let uri = record
-            .get(header_names.iter().position(|h| h == "login_uri"))
-            .unwrap_or("")
-            .to_string();
+        let name = idx("name").and_then(|i| record.get(i)).unwrap_or("").to_string();
+        let username = idx("login_username").and_then(|i| record.get(i));
+        let password = idx("login_password").and_then(|i| record.get(i));
+        let uri = idx("login_uri").and_then(|i| record.get(i)).unwrap_or("");
+        let _folder = idx("folder").and_then(|i| record.get(i)).unwrap_or("");
+        let favorite = idx("favorite").and_then(|i| record.get(i)).unwrap_or("0");
+        let notes = idx("notes").and_then(|i| record.get(i));
+        let _fields = idx("fields").and_then(|i| record.get(i)).unwrap_or("");
+        let totp = idx("login_totp").and_then(|i| record.get(i));
 
         let now = chrono::Utc::now();
 
@@ -47,21 +43,21 @@ pub fn parse_bitwarden_csv(data: &str) -> Result<Vec<Item>> {
             vault_id: uuid::Uuid::nil(),
             folder_id: None,
             organization_id: None,
-            name,
-            username: username.map(|s| s.to_string()).filter(|s| !s.is_empty()),
+            name: if name.is_empty() { uri.to_string() } else { name },
+            username: username.filter(|s| !s.is_empty()).map(|s| s.to_string()),
             password_hash: password
                 .filter(|s| !s.is_empty())
                 .map(|p| pspm_core::crypto::sha1_hex(p.as_bytes())),
-            password_encrypted: password.map(|s| s.to_string()).filter(|s| !s.is_empty()),
-            uris: if uri.is_empty() { vec![] } else { vec![uri] },
-            notes: None,
+            password_encrypted: password.filter(|s| !s.is_empty()).map(|s| s.to_string()),
+            uris: if uri.is_empty() { vec![] } else { vec![uri.to_string()] },
+            notes: notes.filter(|s| !s.is_empty()).map(|s| s.to_string()),
             fields: vec![],
-            totp_secret_encrypted: None,
+            totp_secret_encrypted: totp.filter(|s| !s.is_empty()).map(|s| s.to_string()),
             totp_uri: None,
             passkey: false,
-            mfa_enabled: false,
+            mfa_enabled: totp.filter(|s| !s.is_empty()).is_some(),
             item_type: pspm_core::types::ItemType::Login,
-            favorite: false,
+            favorite: favorite == "1",
             reprompt: pspm_core::types::RepromptType::None,
             created_at: now,
             updated_at: now,
